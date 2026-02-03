@@ -56,11 +56,11 @@ export enum ErrorSeverity {
  * Error context for additional debugging information
  */
 export interface ErrorContext {
-  userId?: string;
-  guildId?: string;
-  channelId?: string;
-  commandName?: string;
-  action?: string;
+  userId?: string | undefined;
+  guildId?: string | undefined;
+  channelId?: string | undefined;
+  commandName?: string | undefined;
+  action?: string | undefined;
   [key: string]: unknown;
 }
 
@@ -73,7 +73,7 @@ export class BotError extends Error {
   public readonly timestamp: Date;
   public readonly isOperational: boolean;
   public readonly severity: ErrorSeverity;
-  public readonly originalError?: Error;
+  public readonly originalError: Error | undefined;
 
   constructor(
     message: string,
@@ -92,7 +92,9 @@ export class BotError extends Error {
     this.originalError = originalError;
 
     // Maintains proper stack trace
-    Error.captureStackTrace(this, this.constructor);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
   }
 
   /**
@@ -156,8 +158,8 @@ export class CommandError extends BotError {
  */
 export class ValidationError extends BotError {
   public readonly field: string;
-  public readonly expected?: string;
-  public readonly received?: unknown;
+  public readonly expected: string | undefined;
+  public readonly received: unknown;
 
   constructor(
     message: string,
@@ -186,7 +188,7 @@ export class ValidationError extends BotError {
  */
 export class PermissionError extends BotError {
   public readonly requiredPermissions: string[];
-  public readonly userPermissions?: string[];
+  public readonly userPermissions: string[] | undefined;
 
   constructor(
     requiredPermissions: string[],
@@ -214,7 +216,13 @@ export class CooldownError extends BotError {
 
   constructor(remainingTime: number, commandName: string, context: ErrorContext = {}) {
     const message = `Command "${commandName}" is on cooldown. ${remainingTime} seconds remaining.`;
-    super(message, ErrorCode.COOLDOWN_ACTIVE, { ...context, commandName }, undefined, ErrorSeverity.LOW);
+    super(
+      message,
+      ErrorCode.COOLDOWN_ACTIVE,
+      { ...context, commandName },
+      undefined,
+      ErrorSeverity.LOW
+    );
     this.name = 'CooldownError';
     this.remainingTime = remainingTime;
     this.commandName = commandName;
@@ -229,7 +237,7 @@ export class CooldownError extends BotError {
  * Configuration errors for missing or invalid configuration
  */
 export class ConfigurationError extends BotError {
-  public readonly configKey?: string;
+  public readonly configKey: string | undefined;
 
   constructor(message: string, configKey?: string, context: ErrorContext = {}) {
     super(
@@ -253,7 +261,7 @@ export class ConfigurationError extends BotError {
  */
 export class ExternalServiceError extends BotError {
   public readonly serviceName: string;
-  public readonly statusCode?: number;
+  public readonly statusCode: number | undefined;
   public readonly retryable: boolean;
 
   constructor(
@@ -325,7 +333,10 @@ export class ErrorHandler {
   /**
    * Handle an error with logging and notification
    */
-  static async handle(error: Error | BotError, context: ErrorContext = {}): Promise<ErrorHandleResult> {
+  static async handle(
+    error: Error | BotError,
+    context: ErrorContext = {}
+  ): Promise<ErrorHandleResult> {
     const botError = this.normalizeError(error, context);
 
     // Track error counts
@@ -346,7 +357,8 @@ export class ErrorHandler {
         reported = true;
       } catch (handlerError) {
         Logger.error('Error handler failed', {
-          handlerError: handlerError instanceof Error ? handlerError.message : String(handlerError),
+          handlerError:
+            handlerError instanceof Error ? handlerError.message : String(handlerError),
           originalError: botError.message,
         });
       }
@@ -379,7 +391,7 @@ export class ErrorHandler {
 
     try {
       const replyOptions = {
-        content: `❌ ${userMessage}`,
+        content: `${userMessage}`,
         ephemeral: true,
       };
 
@@ -530,10 +542,8 @@ export const createError = {
     received?: unknown
   ): ValidationError => new ValidationError(message, field, expected, received),
 
-  permission: (
-    requiredPermissions: string[],
-    userPermissions?: string[]
-  ): PermissionError => new PermissionError(requiredPermissions, userPermissions),
+  permission: (requiredPermissions: string[], userPermissions?: string[]): PermissionError =>
+    new PermissionError(requiredPermissions, userPermissions),
 
   cooldown: (remainingTime: number, commandName: string): CooldownError =>
     new CooldownError(remainingTime, commandName),

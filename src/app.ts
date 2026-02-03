@@ -32,7 +32,7 @@ async function loadCommands(): Promise<void> {
 
   try {
     const commandFiles = readdirSync(commandsPath).filter(
-      file => file.endsWith('.ts') || file.endsWith('.js')
+      (file: string) => file.endsWith('.ts') || file.endsWith('.js')
     );
 
     for (const file of commandFiles) {
@@ -63,7 +63,7 @@ async function loadCommands(): Promise<void> {
         );
       }
     }
-  } catch (error) {
+  } catch {
     Logger.warn('Commands directory not found', { path: commandsPath });
   }
 
@@ -77,7 +77,7 @@ async function loadEvents(): Promise<void> {
 
   try {
     const eventFiles = readdirSync(eventsPath).filter(
-      file => file.endsWith('.ts') || file.endsWith('.js')
+      (file: string) => file.endsWith('.ts') || file.endsWith('.js')
     );
 
     for (const file of eventFiles) {
@@ -104,25 +104,27 @@ async function loadEvents(): Promise<void> {
         );
       }
     }
-  } catch (error) {
+  } catch {
     Logger.warn('Events directory not found', { path: eventsPath });
   }
 }
 
 async function deployCommands(commands: unknown[]): Promise<void> {
-  if (!process.env.DISCORD_TOKEN || !process.env.DISCORD_CLIENT_ID) {
+  if (!process.env['DISCORD_TOKEN'] || !process.env['DISCORD_CLIENT_ID']) {
     throw new ConfigurationError(
       'Missing required environment variables: DISCORD_TOKEN or DISCORD_CLIENT_ID',
       'DISCORD_TOKEN'
     );
   }
 
-  const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+  const rest = new REST().setToken(process.env['DISCORD_TOKEN']);
 
   try {
     Logger.info('Refreshing application commands', { count: commands.length });
 
-    await rest.put(Routes.applicationCommands(process.env.DISCORD_CLIENT_ID), { body: commands });
+    await rest.put(Routes.applicationCommands(process.env['DISCORD_CLIENT_ID']), {
+      body: commands,
+    });
 
     Logger.info('Application commands refreshed successfully', { count: commands.length });
   } catch (error) {
@@ -137,7 +139,7 @@ async function deployCommands(commands: unknown[]): Promise<void> {
   }
 }
 
-client.on('interactionCreate', async interaction => {
+client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
@@ -230,11 +232,11 @@ async function start(): Promise<void> {
     await loadEvents();
     await loadCommands();
 
-    if (!process.env.DISCORD_TOKEN) {
+    if (!process.env['DISCORD_TOKEN']) {
       throw new ConfigurationError('DISCORD_TOKEN is required', 'DISCORD_TOKEN');
     }
 
-    await client.login(process.env.DISCORD_TOKEN);
+    await client.login(process.env['DISCORD_TOKEN']);
   } catch (error) {
     const botError =
       error instanceof BotError

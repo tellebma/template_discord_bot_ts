@@ -1,12 +1,15 @@
 import type { Client } from 'discord.js';
+import { Logger } from '@/utils';
 
 export default {
   name: 'ready',
   once: true,
   execute(client: Client): void {
-    console.log(\`🚀 \${client.user?.tag} is online and ready!\`);
-    console.log(\`📊 Serving \${client.guilds.cache.size} servers\`);
-    console.log(\`👥 Watching \${client.users.cache.size} users\`);
+    Logger.info('Bot is online and ready', {
+      tag: client.user?.tag,
+      guilds: client.guilds.cache.size,
+      users: client.users.cache.size,
+    });
 
     client.user?.setActivity('with TypeScript', { type: 0 }); // PLAYING type
   },

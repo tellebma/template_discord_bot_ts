@@ -29,38 +29,40 @@ export default createStandardCommand({
   ],
   handler: async (
     interaction: ChatInputCommandInteraction,
-    params: Record<string, any>
+    params: Record<string, unknown>
   ): Promise<void> => {
-    const targetUser: User = (params.target as User) || interaction.user;
-    const member: GuildMember | null = interaction.guild?.members.cache.get(targetUser.id) ?? null;
+    const targetUser: User = (params['target'] as User) || interaction.user;
+    const member: GuildMember | null =
+      interaction.guild?.members.cache.get(targetUser.id) ?? null;
 
     const embed = new EmbedBuilder()
-      .setTitle(\`User Information - \${targetUser.tag}\`)
+      .setTitle(`User Information - ${targetUser.tag}`)
       .setThumbnail(targetUser.displayAvatarURL({ size: 256 }))
       .setColor(member?.displayHexColor ?? '#0099ff')
       .addFields(
-        { name: '👤 Username', value: targetUser.tag, inline: true },
-        { name: '🆔 User ID', value: targetUser.id, inline: true },
+        { name: 'Username', value: targetUser.tag, inline: true },
+        { name: 'User ID', value: targetUser.id, inline: true },
         {
-          name: '📅 Account Created',
-          value: \`<t:\${Math.floor(targetUser.createdTimestamp / 1000)}:F>\`,
+          name: 'Account Created',
+          value: `<t:${Math.floor(targetUser.createdTimestamp / 1000)}:F>`,
           inline: false,
         }
       );
 
     if (member) {
-      const roles = member.roles.cache
-        .filter(role => role.name !== '@everyone')
-        .map(role => role.toString())
-        .join(', ') || 'None';
+      const roles =
+        member.roles.cache
+          .filter(role => role.name !== '@everyone')
+          .map(role => role.toString())
+          .join(', ') || 'None';
 
       embed.addFields(
         {
-          name: '📅 Joined Server',
-          value: \`<t:\${Math.floor((member.joinedTimestamp ?? 0) / 1000)}:F>\`,
+          name: 'Joined Server',
+          value: `<t:${Math.floor((member.joinedTimestamp ?? 0) / 1000)}:F>`,
           inline: false,
         },
-        { name: '🎭 Roles', value: roles, inline: false }
+        { name: 'Roles', value: roles, inline: false }
       );
     }
 

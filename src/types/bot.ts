@@ -1,8 +1,24 @@
-import { Client, Collection, SlashCommandBuilder } from 'discord.js';
+import {
+  Client,
+  Collection,
+  SlashCommandBuilder,
+  SlashCommandOptionsOnlyBuilder,
+  SlashCommandSubcommandsOnlyBuilder,
+  ChatInputCommandInteraction,
+} from 'discord.js';
+
+/**
+ * Any slash command builder type
+ */
+export type AnySlashCommandBuilder =
+  | SlashCommandBuilder
+  | SlashCommandOptionsOnlyBuilder
+  | SlashCommandSubcommandsOnlyBuilder
+  | Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>;
 
 export interface BotCommand {
-  data: SlashCommandBuilder;
-  execute: (interaction: any) => Promise<void>;
+  data: AnySlashCommandBuilder;
+  execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 }
 
 export interface ExtendedClient extends Client {
@@ -15,7 +31,7 @@ export interface CommandConfig {
   category?: string;
   permissions?: string[];
   cooldown?: number;
-  data: SlashCommandBuilder;
+  data: AnySlashCommandBuilder;
   parameters?: CommandParameter[];
   handler: CommandHandler;
 }
@@ -42,7 +58,7 @@ export interface ParameterValidation {
   pattern?: RegExp;
 }
 
-export type ParameterType = 
+export type ParameterType =
   | 'string'
   | 'integer'
   | 'number'
@@ -53,10 +69,13 @@ export type ParameterType =
   | 'mentionable'
   | 'attachment';
 
-export type CommandHandler = (interaction: any, params: Record<string, any>) => Promise<void>;
+export type CommandHandler = (
+  interaction: ChatInputCommandInteraction,
+  params: Record<string, unknown>
+) => Promise<void>;
 
 export interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface ConfigType {
@@ -72,12 +91,12 @@ export interface ConfigType {
 
 export interface ValidationResult {
   valid: boolean;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   error?: string;
 }
 
 export interface ParameterValidator {
-  (value: any, options?: any): boolean;
+  (value: unknown, options?: unknown): boolean;
 }
 
 export interface CommandCooldown {

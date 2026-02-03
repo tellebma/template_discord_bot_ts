@@ -2,7 +2,7 @@
  * Example command using the new defineCommand approach
  * Compare this with echo.ts to see the simplification
  */
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+import { SlashCommandBuilder } from 'discord.js';
 import { defineCommand } from '@/utils/defineCommand';
 
 export default defineCommand({
@@ -14,10 +14,7 @@ export default defineCommand({
       opt.setName('user').setDescription('The user to greet').setRequired(true)
     )
     .addStringOption(opt =>
-      opt
-        .setName('message')
-        .setDescription('Custom greeting message')
-        .setMaxLength(200)
+      opt.setName('message').setDescription('Custom greeting message').setMaxLength(200)
     )
     .addBooleanOption(opt =>
       opt.setName('ephemeral').setDescription('Make the response private')
@@ -25,7 +22,6 @@ export default defineCommand({
 
   category: 'fun',
   cooldown: 3,
-  // permissions: [PermissionFlagsBits.SendMessages], // Uncomment to require permission
 
   async execute(ctx) {
     // Type-safe option access - no need for manual casting
@@ -34,7 +30,7 @@ export default defineCommand({
     const ephemeral = ctx.getBoolean('ephemeral') ?? false;
 
     await ctx.reply({
-      content: `${message}, ${user}! 👋`,
+      content: `${message}, ${user}!`,
       ephemeral,
     });
   },
