@@ -6,10 +6,7 @@ const commandData = new SlashCommandBuilder()
   .setName('userinfo')
   .setDescription('Get information about a user')
   .addUserOption(option =>
-    option
-      .setName('target')
-      .setDescription('The user to get information about')
-      .setRequired(false)
+    option.setName('target').setDescription('The user to get information about').setRequired(false)
   );
 
 export default createStandardCommand({
@@ -32,8 +29,7 @@ export default createStandardCommand({
     params: Record<string, unknown>
   ): Promise<void> => {
     const targetUser: User = (params['target'] as User) || interaction.user;
-    const member: GuildMember | null =
-      interaction.guild?.members.cache.get(targetUser.id) ?? null;
+    const member: GuildMember | null = interaction.guild?.members.cache.get(targetUser.id) ?? null;
 
     const embed = new EmbedBuilder()
       .setTitle(`User Information - ${targetUser.tag}`)

@@ -357,8 +357,7 @@ export class ErrorHandler {
         reported = true;
       } catch (handlerError) {
         Logger.error('Error handler failed', {
-          handlerError:
-            handlerError instanceof Error ? handlerError.message : String(handlerError),
+          handlerError: handlerError instanceof Error ? handlerError.message : String(handlerError),
           originalError: botError.message,
         });
       }

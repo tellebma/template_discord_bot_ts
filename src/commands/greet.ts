@@ -10,15 +10,11 @@ export default defineCommand({
   data: new SlashCommandBuilder()
     .setName('greet')
     .setDescription('Greet a user with a custom message')
-    .addUserOption(opt =>
-      opt.setName('user').setDescription('The user to greet').setRequired(true)
-    )
+    .addUserOption(opt => opt.setName('user').setDescription('The user to greet').setRequired(true))
     .addStringOption(opt =>
       opt.setName('message').setDescription('Custom greeting message').setMaxLength(200)
     )
-    .addBooleanOption(opt =>
-      opt.setName('ephemeral').setDescription('Make the response private')
-    ),
+    .addBooleanOption(opt => opt.setName('ephemeral').setDescription('Make the response private')),
 
   category: 'fun',
   cooldown: 3,

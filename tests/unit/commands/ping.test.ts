@@ -13,9 +13,7 @@ const createPingCommand = () => ({
     const latency = Date.now() - interaction.createdTimestamp;
     const apiLatency = 50; // Mocked
 
-    await interaction.editReply(
-      `Pong! Latency: ${latency}ms | API Latency: ${apiLatency}ms`
-    );
+    await interaction.editReply(`Pong! Latency: ${latency}ms | API Latency: ${apiLatency}ms`);
   }),
 });
 

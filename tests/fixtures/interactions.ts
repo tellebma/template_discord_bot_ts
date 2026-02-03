@@ -91,10 +91,7 @@ export const interactionFixtures = {
   /**
    * Interaction with custom options
    */
-  withOptions: (
-    commandName: string,
-    options: Record<string, unknown>
-  ) => {
+  withOptions: (commandName: string, options: Record<string, unknown>) => {
     const interaction = mockInteraction({ commandName });
 
     if (options.string) {

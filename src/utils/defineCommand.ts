@@ -46,11 +46,26 @@ export interface CommandContext {
   getInteger: (name: string, required?: boolean) => number | null;
   getNumber: (name: string, required?: boolean) => number | null;
   getBoolean: (name: string, required?: boolean) => boolean | null;
-  getUser: (name: string, required?: boolean) => ReturnType<ChatInputCommandInteraction['options']['getUser']>;
-  getChannel: (name: string, required?: boolean) => ReturnType<ChatInputCommandInteraction['options']['getChannel']>;
-  getRole: (name: string, required?: boolean) => ReturnType<ChatInputCommandInteraction['options']['getRole']>;
-  getMentionable: (name: string, required?: boolean) => ReturnType<ChatInputCommandInteraction['options']['getMentionable']>;
-  getAttachment: (name: string, required?: boolean) => ReturnType<ChatInputCommandInteraction['options']['getAttachment']>;
+  getUser: (
+    name: string,
+    required?: boolean
+  ) => ReturnType<ChatInputCommandInteraction['options']['getUser']>;
+  getChannel: (
+    name: string,
+    required?: boolean
+  ) => ReturnType<ChatInputCommandInteraction['options']['getChannel']>;
+  getRole: (
+    name: string,
+    required?: boolean
+  ) => ReturnType<ChatInputCommandInteraction['options']['getRole']>;
+  getMentionable: (
+    name: string,
+    required?: boolean
+  ) => ReturnType<ChatInputCommandInteraction['options']['getMentionable']>;
+  getAttachment: (
+    name: string,
+    required?: boolean
+  ) => ReturnType<ChatInputCommandInteraction['options']['getAttachment']>;
 
   // Response shortcuts
   reply: ChatInputCommandInteraction['reply'];
@@ -91,7 +106,10 @@ function createContext(interaction: ChatInputCommandInteraction): CommandContext
 /**
  * Check if user has required permissions
  */
-function checkPermissions(interaction: ChatInputCommandInteraction, permissions: bigint[]): boolean {
+function checkPermissions(
+  interaction: ChatInputCommandInteraction,
+  permissions: bigint[]
+): boolean {
   if (permissions.length === 0) return true;
   if (!interaction.memberPermissions) return false;
   return permissions.every(perm => interaction.memberPermissions?.has(perm));
@@ -100,7 +118,11 @@ function checkPermissions(interaction: ChatInputCommandInteraction, permissions:
 /**
  * Check cooldown and return remaining seconds if on cooldown
  */
-function checkCooldown(commandName: string, userId: string, cooldownSeconds: number): number | null {
+function checkCooldown(
+  commandName: string,
+  userId: string,
+  cooldownSeconds: number
+): number | null {
   if (cooldownSeconds <= 0) return null;
 
   const now = Date.now();

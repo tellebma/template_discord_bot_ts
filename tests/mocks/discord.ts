@@ -13,9 +13,8 @@ export const mockCollection = () => {
     clear: vi.fn(() => map.clear()),
     size: map.size,
     forEach: vi.fn((fn: (value: unknown, key: string) => void) => map.forEach(fn)),
-    map: vi.fn(
-      <T>(fn: (value: unknown, key: string) => T): T[] =>
-        Array.from(map.entries()).map(([k, v]) => fn(v, k))
+    map: vi.fn(<T>(fn: (value: unknown, key: string) => T): T[] =>
+      Array.from(map.entries()).map(([k, v]) => fn(v, k))
     ),
     filter: vi.fn((fn: (value: unknown, key: string) => boolean) => {
       const filtered = new Map();
