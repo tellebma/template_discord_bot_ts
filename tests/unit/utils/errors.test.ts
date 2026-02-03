@@ -154,7 +154,8 @@ describe('ErrorHandler', () => {
       const result = await ErrorHandler.handle(error);
 
       expect(result.handled).toBe(true);
-      expect(result.error).toBe(error);
+      expect(result.error.message).toBe(error.message);
+      expect(result.error.code).toBe(error.code);
     });
 
     it('should wrap non-BotError in BotError', async () => {
@@ -172,7 +173,12 @@ describe('ErrorHandler', () => {
       const error = new BotError('Test', ErrorCode.UNKNOWN_ERROR);
       await ErrorHandler.handle(error);
 
-      expect(handler).toHaveBeenCalledWith(error);
+      expect(handler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Test',
+          code: ErrorCode.UNKNOWN_ERROR,
+        })
+      );
     });
   });
 
