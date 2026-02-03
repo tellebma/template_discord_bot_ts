@@ -4,6 +4,12 @@
 export { Logger, LogLevel } from './logger';
 export { config, validateConfig } from './config';
 export {
+  defineCommand,
+  simpleCommand,
+  type CommandOptions,
+  type CommandContext,
+} from './defineCommand';
+export {
   // Error classes
   BotError,
   CommandError,
