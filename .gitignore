@@ -21,6 +21,11 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+.nyc_output/
+
+# Test artifacts
+test-results/
+playwright-report/
 
 # IDE files
 .vscode/

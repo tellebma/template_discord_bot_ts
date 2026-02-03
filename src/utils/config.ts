@@ -5,6 +5,8 @@ dotenvConfig();
 
 const requiredEnvVars = ['DISCORD_TOKEN', 'DISCORD_CLIENT_ID'] as const;
 
+export const validateConfig = validateEnvironment;
+
 export function validateEnvironment(): void {
   const missing = requiredEnvVars.filter(varName => !process.env[varName]);
 
