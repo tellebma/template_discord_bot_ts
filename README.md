@@ -1,29 +1,29 @@
 # Discord Bot Template (TypeScript)
 
-A comprehensive Discord bot template built with TypeScript and Discord.js v14, featuring advanced type safety, modern development practices, and a robust command system.
+A comprehensive Discord bot template built with TypeScript and Discord.js v14, featuring advanced type safety, modern development practices, CI/CD, testing, and a robust error handling system.
+
+[![CI](https://github.com/your-username/discord-bot-template-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/discord-bot-template-ts/actions/workflows/ci.yml)
+[![Release](https://github.com/your-username/discord-bot-template-ts/actions/workflows/release.yml/badge.svg)](https://github.com/your-username/discord-bot-template-ts/actions/workflows/release.yml)
+[![codecov](https://codecov.io/gh/your-username/discord-bot-template-ts/branch/main/graph/badge.svg)](https://codecov.io/gh/your-username/discord-bot-template-ts)
 
 ## Features
 
-- 🚀 **TypeScript** - Full type safety and modern JavaScript features
-- 🤖 **Slash Command Support** - Modern Discord slash commands with type checking
-- 📁 **Organized Architecture** - Clean, modular file structure with path aliases
-- 🔧 **Environment Configuration** - Secure configuration management with validation
-- 📝 **Advanced Logging** - Structured logging with context and type safety
-- 🏓 **Example Commands** - Ready-to-use TypeScript command examples
-- 🚀 **Auto-deployment** - Automatic command registration
-- 🛡️ **Security Features** - Built-in validation and sanitization
-- 📋 **Command Templates** - Standardized command creation system with generics
-- 🔄 **Hot Reload** - Development mode with tsx watch
-- 🐳 **Docker Support** - Container-ready deployment with multi-stage builds
-- 📚 **Comprehensive Documentation** - Detailed guides and API docs
-- 🔍 **ESLint & Prettier** - Code quality and formatting tools
-- 🏗️ **Build System** - TypeScript compilation with source maps
+- **TypeScript** - Full type safety with strict mode enabled
+- **Slash Commands** - Modern Discord slash commands with type checking
+- **Organized Architecture** - Clean, modular file structure with path aliases
+- **Error Handling** - Comprehensive error management system with categorization
+- **Testing** - Unit testing setup with Vitest and coverage reporting
+- **CI/CD** - GitHub Actions with semantic release automation
+- **Logging** - Structured JSON logging with context and severity levels
+- **Git Hooks** - Pre-commit and commit-msg hooks with Husky
+- **Code Quality** - ESLint, Prettier, and lint-staged integration
+- **Docker Support** - Container-ready deployment with multi-stage builds
 
 ## Quick Start
 
 1. **Clone and setup**
    ```bash
-   cp -r template-ts my-discord-bot
+   git clone https://github.com/your-username/discord-bot-template-ts.git my-discord-bot
    cd my-discord-bot
    cp .env.example .env
    npm install
@@ -38,7 +38,7 @@ A comprehensive Discord bot template built with TypeScript and Discord.js v14, f
    ```bash
    # Development mode with hot reload
    npm run dev
-   
+
    # Or build and run production
    npm run build
    npm start
@@ -47,162 +47,206 @@ A comprehensive Discord bot template built with TypeScript and Discord.js v14, f
 ## Project Structure
 
 ```
-template-ts/
-├── src/                       # TypeScript source code
-│   ├── app.ts                # Main application entry point
-│   ├── commands/             # Slash commands
-│   │   ├── ping.ts          # Basic ping command
-│   │   ├── userinfo.ts      # User information command
-│   │   ├── serverinfo.ts    # Server information command
-│   │   └── echo.ts          # Echo command with validation
-│   ├── events/              # Discord.js event handlers
-│   │   ├── ready.ts         # Bot ready event
-│   │   └── *.ts             # Additional event handlers
-│   ├── utils/               # Utility modules
-│   │   ├── config.ts        # Configuration management
-│   │   ├── logger.ts        # Structured logging system
-│   │   ├── commandBuilder.ts # Command builder utility
-│   │   ├── commandTemplate.ts # Command template system
-│   │   └── commandGenerator.ts # Command generation utility
-│   ├── types/               # TypeScript type definitions
-│   │   └── bot.ts           # Bot-specific types and interfaces
-│   └── fonctions/           # Business logic modules
-│       ├── config/          # Configuration modules
-│       ├── api/             # API integration modules
-│       └── database/        # Database operations
-├── dist/                    # Compiled JavaScript (generated)
-├── docs/                    # Documentation
-├── package.json            # Dependencies and scripts
-├── tsconfig.json           # TypeScript configuration
-├── .eslintrc.js            # ESLint configuration
-├── .prettierrc.js          # Prettier configuration
-├── .env.example            # Environment variables template
-├── .gitignore              # Git ignore patterns
-├── Dockerfile              # Container configuration
-└── README.md               # This file
+├── .github/
+│   └── workflows/
+│       ├── ci.yml              # CI pipeline (lint, test, build)
+│       └── release.yml         # Semantic release automation
+├── .husky/                     # Git hooks
+│   ├── pre-commit              # Lint-staged hook
+│   └── commit-msg              # Commitlint hook
+├── src/
+│   ├── app.ts                  # Main application entry point
+│   ├── commands/               # Slash commands
+│   ├── events/                 # Discord.js event handlers
+│   ├── utils/
+│   │   ├── config.ts           # Configuration management
+│   │   ├── logger.ts           # Structured logging system
+│   │   ├── errors.ts           # Error handling system
+│   │   ├── commandTemplate.ts  # Command template system
+│   │   └── index.ts            # Utility exports
+│   ├── types/                  # TypeScript type definitions
+│   └── fonctions/              # Business logic modules
+├── tests/
+│   ├── setup.ts                # Test configuration
+│   ├── mocks/                  # Mock utilities
+│   ├── fixtures/               # Test fixtures
+│   ├── unit/                   # Unit tests
+│   └── integration/            # Integration tests
+├── dist/                       # Compiled JavaScript (generated)
+├── coverage/                   # Test coverage reports (generated)
+├── vitest.config.ts            # Vitest configuration
+├── commitlint.config.js        # Commit message linting
+├── .releaserc.json             # Semantic release config
+└── package.json                # Dependencies and scripts
 ```
 
-## Command System
+## Error Handling System
 
-This template features three ways to create commands with full TypeScript support:
+The template includes a comprehensive error handling system with:
 
-### 1. Basic Commands
-
-Simple Discord.js commands with type safety:
+### Error Types
 
 ```typescript
-import { SlashCommandBuilder } from 'discord.js';
-import type { ChatInputCommandInteraction } from 'discord.js';
+import {
+  CommandError,
+  ValidationError,
+  PermissionError,
+  CooldownError,
+  ConfigurationError,
+  ExternalServiceError,
+  ErrorCode,
+  ErrorSeverity
+} from '@/utils';
 
-export default {
-  data: new SlashCommandBuilder()
-    .setName('example')
-    .setDescription('An example command'),
-  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-    await interaction.reply('Hello World!');
-  },
-};
+// Command execution error
+throw new CommandError('Failed to execute', 'ping', 'Something went wrong');
+
+// Validation error
+throw new ValidationError('Invalid input', 'username', 'string');
+
+// Permission error
+throw new PermissionError(['Administrator', 'ManageGuild']);
+
+// Cooldown error
+throw new CooldownError(5, 'ping');
 ```
 
-### 2. Template Commands (Recommended)
-
-Enhanced commands with built-in features and strict typing:
+### Error Handler
 
 ```typescript
-import { SlashCommandBuilder } from 'discord.js';
-import { createStandardCommand } from '@/utils/commandTemplate';
-import type { ChatInputCommandInteraction } from 'discord.js';
+import { ErrorHandler, errorMiddleware } from '@/utils';
 
-const commandData = new SlashCommandBuilder()
-  .setName('example')
-  .setDescription('An enhanced example command');
+// Handle errors globally
+await ErrorHandler.handle(error, { userId: '123' });
 
-export default createStandardCommand({
-  name: 'example',
-  description: 'An enhanced example command',
-  category: 'general',
-  permissions: [],
-  cooldown: 3,
-  data: commandData,
-  handler: async (
-    interaction: ChatInputCommandInteraction, 
-    params: Record<string, any>
-  ): Promise<void> => {
-    await interaction.reply('Hello from template system!');
-  }
+// Handle interaction errors with user feedback
+await ErrorHandler.handleInteractionError(error, interaction);
+
+// Register custom error handlers
+ErrorHandler.registerHandler(async (error) => {
+  // Send to external monitoring service
+  await sendToSentry(error);
+});
+
+// Wrap command handlers with error middleware
+const wrappedExecute = errorMiddleware(execute);
+```
+
+### Error Codes
+
+| Code | Category |
+|------|----------|
+| E1xxx | General errors |
+| E2xxx | Command errors |
+| E3xxx | Validation errors |
+| E4xxx | Permission errors |
+| E5xxx | Rate limiting |
+| E6xxx | Configuration errors |
+| E7xxx | External service errors |
+
+## Testing
+
+The template uses Vitest for testing with full TypeScript support.
+
+### Running Tests
+
+```bash
+# Run tests in watch mode
+npm test
+
+# Run tests once
+npm run test:run
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in CI mode
+npm run test:ci
+
+# Open Vitest UI
+npm run test:ui
+```
+
+### Writing Tests
+
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { mockInteraction } from '../mocks/discord';
+
+describe('Ping Command', () => {
+  it('should reply with pong', async () => {
+    const interaction = mockInteraction({ commandName: 'ping' });
+
+    await pingCommand.execute(interaction);
+
+    expect(interaction.reply).toHaveBeenCalled();
+  });
 });
 ```
 
-### 3. Generated Commands
-
-Use the command generator with TypeScript:
+### Test Fixtures
 
 ```typescript
-import { CommandGenerator } from '@/utils/commandGenerator';
+import { interactionFixtures, userFixtures } from '../fixtures/interactions';
 
-const content = CommandGenerator.generateCommand('greet', {
-  description: 'Greet a user',
-  parameters: [
-    {
-      type: 'user',
-      name: 'target',
-      description: 'User to greet',
-      required: true,
-    }
-  ],
-  useTemplate: true,
-});
+// Pre-configured interaction for ping command
+const interaction = interactionFixtures.ping();
 
-CommandGenerator.saveCommand('greet', content, './src/commands');
+// Interaction with specific options
+const echoInteraction = interactionFixtures.echo('Hello World');
 ```
 
-## TypeScript Features
+## CI/CD Pipeline
 
-### Type Safety
+### Continuous Integration
 
-All components are fully typed:
+The CI pipeline runs on every push and pull request:
 
-```typescript
-// Strict parameter validation
-interface CommandParameter {
-  type: ParameterType;
-  name: string;
-  description: string;
-  required?: boolean;
-  validation?: ParameterValidation;
-}
+1. **Lint** - ESLint and Prettier checks
+2. **Type Check** - TypeScript compilation check
+3. **Test** - Unit tests with coverage
+4. **Build** - Production build verification
 
-// Type-safe command handlers
-type CommandHandler = (
-  interaction: ChatInputCommandInteraction, 
-  params: Record<string, any>
-) => Promise<void>;
+### Semantic Release
+
+Automated versioning and releases based on conventional commits:
+
+| Commit Type | Version Bump |
+|-------------|--------------|
+| `feat:` | Minor (1.x.0) |
+| `fix:` | Patch (1.0.x) |
+| `perf:` | Patch |
+| `BREAKING CHANGE:` | Major (x.0.0) |
+
+### Commit Message Format
+
+```bash
+# Feature
+git commit -m "feat: add user profile command"
+
+# Bug fix
+git commit -m "fix: resolve cooldown calculation"
+
+# Breaking change
+git commit -m "feat!: redesign command system
+
+BREAKING CHANGE: Command handlers now receive parsed parameters"
 ```
 
-### Path Aliases
+## Scripts
 
-Import with clean path aliases:
-
-```typescript
-import { Logger } from '@/utils/logger';
-import { createStandardCommand } from '@/utils/commandTemplate';
-import type { CommandConfig } from '@/types/bot';
-```
-
-### Strict Configuration
-
-TypeScript ensures type safety throughout:
-
-```typescript
-// tsconfig.json with strict settings
-{
-  "strict": true,
-  "noImplicitAny": true,
-  "noImplicitReturns": true,
-  "noUnusedLocals": true,
-  "exactOptionalPropertyTypes": true
-}
-```
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start with hot reload |
+| `npm run build` | Compile TypeScript |
+| `npm start` | Run production build |
+| `npm test` | Run tests in watch mode |
+| `npm run test:ci` | Run tests with coverage |
+| `npm run lint` | Check code quality |
+| `npm run lint:fix` | Fix linting issues |
+| `npm run format` | Format code |
+| `npm run type-check` | Type check only |
+| `npm run validate` | Run all checks |
 
 ## Environment Variables
 
@@ -213,53 +257,48 @@ TypeScript ensures type safety throughout:
 | `NODE_ENV` | Environment mode (development/production) | No |
 | `BOT_PREFIX` | Command prefix for legacy commands | No |
 
-## Scripts
+## Command System
 
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm start` - Start the bot in production mode (requires build)
-- `npm run dev` - Start with hot reload for development (tsx)
-- `npm run dev:build` - Start TypeScript compiler in watch mode
-- `npm run deploy:commands` - Deploy/update Discord slash commands
-- `npm run lint` - Check code quality with ESLint
-- `npm run lint:fix` - Fix auto-fixable linting issues
-- `npm run format` - Format code with Prettier
-- `npm run format:check` - Check code formatting
-- `npm run type-check` - Type check without emitting files
-- `npm run clean` - Remove compiled files
+### Basic Commands
 
-## Development Features
+```typescript
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 
-- **Hot Reload** - Automatic restart with tsx during development
-- **Type Checking** - Real-time TypeScript error detection
-- **Code Quality** - ESLint with TypeScript rules
-- **Auto-formatting** - Prettier integration
-- **Path Mapping** - Clean imports with @ aliases
-- **Source Maps** - Debug support with source maps
-- **Build Optimization** - Production-ready compilation
+export default {
+  data: new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Check bot latency'),
+  async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+    await interaction.reply('Pong!');
+  },
+};
+```
 
-## Example Commands
+### Template Commands (Recommended)
 
-The template includes several TypeScript example commands:
+```typescript
+import { SlashCommandBuilder } from 'discord.js';
+import { createStandardCommand } from '@/utils/commandTemplate';
 
-- **`/ping`** - Basic latency check with type safety
-- **`/userinfo`** - Display user information with typed embeds
-- **`/serverinfo`** - Show server statistics with strict typing
-- **`/echo`** - Echo messages with type-safe content filtering
+export default createStandardCommand({
+  name: 'greet',
+  description: 'Greet a user',
+  category: 'fun',
+  permissions: [],
+  cooldown: 5,
+  data: new SlashCommandBuilder()
+    .setName('greet')
+    .setDescription('Greet a user')
+    .addUserOption(opt =>
+      opt.setName('user').setDescription('User to greet').setRequired(true)
+    ),
+  handler: async (interaction, params) => {
+    await interaction.reply(`Hello, ${params.user}!`);
+  }
+});
+```
 
 ## Deployment
-
-### Development
-
-```bash
-npm run dev
-```
-
-### Production Build
-
-```bash
-npm run build
-npm start
-```
 
 ### Docker
 
@@ -268,21 +307,34 @@ docker build -t my-discord-bot .
 docker run -d --env-file .env my-discord-bot
 ```
 
-### Type Safety in Production
+### Production
 
-The build process ensures:
-- All TypeScript errors are caught at compile time
-- Generated JavaScript is optimized
-- Source maps available for debugging
-- Type declarations included
+```bash
+npm run build
+NODE_ENV=production npm start
+```
+
+## GitHub Repository Setup
+
+1. **Enable GitHub Actions** in repository settings
+2. **Add secrets** for semantic release:
+   - `GITHUB_TOKEN` (automatic)
+   - `NPM_TOKEN` (optional, for npm publishing)
+   - `CODECOV_TOKEN` (for coverage reports)
+
+3. **Branch protection** (recommended):
+   - Require status checks (CI)
+   - Require pull request reviews
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes with proper TypeScript types
-4. Run `npm run type-check` and `npm run lint`
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Make changes with proper TypeScript types
+4. Write tests for new functionality
+5. Run validation: `npm run validate`
+6. Commit with conventional commits: `git commit -m "feat: add feature"`
+7. Push and create a pull request
 
 ## License
 

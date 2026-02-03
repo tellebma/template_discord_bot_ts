@@ -11,11 +11,15 @@ interface LogEntry {
   timestamp: string;
   level: string;
   message: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export class Logger {
-  private static formatLogEntry(level: LogLevel, message: string, context: LogContext = {}): LogEntry {
+  private static formatLogEntry(
+    level: LogLevel,
+    message: string,
+    context: LogContext = {}
+  ): LogEntry {
     return {
       timestamp: new Date().toISOString(),
       level: level.toUpperCase(),
@@ -46,7 +50,7 @@ export class Logger {
   }
 
   public static debug(message: string, context: LogContext = {}): void {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env['NODE_ENV'] === 'development') {
       this.log(LogLevel.DEBUG, message, context);
     }
   }

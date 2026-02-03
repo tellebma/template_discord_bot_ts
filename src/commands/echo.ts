@@ -46,18 +46,18 @@ export default createStandardCommand({
   ],
   handler: async (
     interaction: ChatInputCommandInteraction,
-    params: Record<string, any>
+    params: Record<string, unknown>
   ): Promise<void> => {
-    const message = params.message as string;
-    const ephemeral = (params.ephemeral as boolean) ?? false;
+    const message = params['message'] as string;
+    const ephemeral = (params['ephemeral'] as boolean) ?? false;
 
     // Basic content filtering - prevent @everyone/@here mentions
     const filteredMessage = message
-      .replace(/@everyone/gi, '@\\u200Beveryone')
-      .replace(/@here/gi, '@\\u200Bhere');
+      .replace(/@everyone/gi, '@\u200Beveryone')
+      .replace(/@here/gi, '@\u200Bhere');
 
     await interaction.reply({
-      content: \`📢 \${filteredMessage}\`,
+      content: `${filteredMessage}`,
       ephemeral: ephemeral,
       allowedMentions: { parse: [] }, // Prevent all mentions for safety
     });

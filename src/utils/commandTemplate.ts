@@ -1,47 +1,56 @@
-import type { 
-  CommandConfig, 
-  CommandParameter, 
-  ValidationResult, 
+import type {
+  CommandConfig,
+  CommandParameter,
+  ValidationResult,
   ParameterValidator,
-  LogContext 
+  LogContext,
+  AnySlashCommandBuilder,
 } from '@/types/bot';
 import { Logger } from '@/utils/logger';
 import type { ChatInputCommandInteraction, PermissionResolvable } from 'discord.js';
 
 export const ParameterValidators: Record<string, ParameterValidator> = {
-  string: (value: any, options: any = {}): boolean => {
+  string: (value: unknown, options: unknown = {}): boolean => {
     if (typeof value !== 'string') return false;
-    if (options.minLength && value.length < options.minLength) return false;
-    if (options.maxLength && value.length > options.maxLength) return false;
-    if (options.pattern && !options.pattern.test(value)) return false;
+    const opts = options as Record<string, unknown>;
+    if (opts['minLength'] && value.length < (opts['minLength'] as number)) return false;
+    if (opts['maxLength'] && value.length > (opts['maxLength'] as number)) return false;
+    if (opts['pattern'] && !(opts['pattern'] as RegExp).test(value)) return false;
     return true;
   },
 
-  integer: (value: any, options: any = {}): boolean => {
+  integer: (value: unknown, options: unknown = {}): boolean => {
     if (!Number.isInteger(value)) return false;
-    if (options.min !== undefined && value < options.min) return false;
-    if (options.max !== undefined && value > options.max) return false;
+    const opts = options as Record<string, unknown>;
+    if (opts['min'] !== undefined && (value as number) < (opts['min'] as number)) return false;
+    if (opts['max'] !== undefined && (value as number) > (opts['max'] as number)) return false;
     return true;
   },
 
-  number: (value: any, options: any = {}): boolean => {
+  number: (value: unknown, options: unknown = {}): boolean => {
     if (typeof value !== 'number' || isNaN(value)) return false;
-    if (options.min !== undefined && value < options.min) return false;
-    if (options.max !== undefined && value > options.max) return false;
+    const opts = options as Record<string, unknown>;
+    if (opts['min'] !== undefined && value < (opts['min'] as number)) return false;
+    if (opts['max'] !== undefined && value > (opts['max'] as number)) return false;
     return true;
   },
 
-  boolean: (value: any): boolean => typeof value === 'boolean',
+  boolean: (value: unknown): boolean => typeof value === 'boolean',
 
-  user: (value: any): boolean => value && typeof value === 'object' && value.id,
+  user: (value: unknown): boolean =>
+    value !== null && typeof value === 'object' && 'id' in (value as Record<string, unknown>),
 
-  channel: (value: any): boolean => value && typeof value === 'object' && value.id,
+  channel: (value: unknown): boolean =>
+    value !== null && typeof value === 'object' && 'id' in (value as Record<string, unknown>),
 
-  role: (value: any): boolean => value && typeof value === 'object' && value.id,
+  role: (value: unknown): boolean =>
+    value !== null && typeof value === 'object' && 'id' in (value as Record<string, unknown>),
 
-  mentionable: (value: any): boolean => value && typeof value === 'object' && value.id,
+  mentionable: (value: unknown): boolean =>
+    value !== null && typeof value === 'object' && 'id' in (value as Record<string, unknown>),
 
-  attachment: (value: any): boolean => value && typeof value === 'object' && value.url,
+  attachment: (value: unknown): boolean =>
+    value !== null && typeof value === 'object' && 'url' in (value as Record<string, unknown>),
 };
 
 export class CommandTemplate {
@@ -81,7 +90,7 @@ export class CommandTemplate {
 
       if (!this.validatePermissions(interaction)) {
         await interaction.reply({
-          content: '❌ You do not have permission to use this command.',
+          content: 'You do not have permission to use this command.',
           ephemeral: true,
         });
         return;
@@ -89,7 +98,7 @@ export class CommandTemplate {
 
       if (!this.checkCooldown(interaction)) {
         await interaction.reply({
-          content: '⏱️ Please wait before using this command again.',
+          content: 'Please wait before using this command again.',
           ephemeral: true,
         });
         return;
@@ -98,7 +107,7 @@ export class CommandTemplate {
       const validatedParams = this.validateParameters(interaction);
       if (!validatedParams.valid) {
         await interaction.reply({
-          content: `❌ Invalid parameters: ${validatedParams.error ?? 'Unknown error'}`,
+          content: `Invalid parameters: ${validatedParams.error ?? 'Unknown error'}`,
           ephemeral: true,
         });
         return;
@@ -126,7 +135,7 @@ export class CommandTemplate {
       } as LogContext);
 
       const replyMessage = {
-        content: '❌ An error occurred while executing this command.',
+        content: 'An error occurred while executing this command.',
         ephemeral: true,
       };
 
@@ -143,8 +152,11 @@ export class CommandTemplate {
 
     if (!interaction.member || !('permissions' in interaction.member)) return false;
 
+    const memberPermissions = interaction.member.permissions;
+    if (typeof memberPermissions === 'string') return false;
+
     return this.permissions.every(permission =>
-      interaction.member?.permissions?.has(permission as PermissionResolvable)
+      memberPermissions.has(permission as PermissionResolvable)
     );
   }
 
@@ -164,7 +176,7 @@ export class CommandTemplate {
   }
 
   private validateParameters(interaction: ChatInputCommandInteraction): ValidationResult {
-    const params: Record<string, any> = {};
+    const params: Record<string, unknown> = {};
 
     for (const param of this.parameters) {
       const option = interaction.options.get(param.name);
@@ -194,7 +206,7 @@ export class CommandTemplate {
 }
 
 export function createStandardCommand(config: CommandConfig): {
-  data: CommandConfig['data'];
+  data: AnySlashCommandBuilder;
   execute: (interaction: ChatInputCommandInteraction) => Promise<void>;
 } {
   const template = new CommandTemplate(config);

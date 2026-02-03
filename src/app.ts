@@ -3,6 +3,16 @@ import { readdirSync } from 'fs';
 import { join } from 'path';
 import { config as dotenvConfig } from 'dotenv';
 import type { BotCommand, ExtendedClient } from '@/types/bot';
+import {
+  Logger,
+  ErrorHandler,
+  BotError,
+  CommandError,
+  ConfigurationError,
+  ExternalServiceError,
+  ErrorCode,
+  ErrorSeverity,
+} from '@/utils';
 
 dotenvConfig();
 
@@ -17,39 +27,46 @@ const client = new Client({
 client.commands = new Collection<string, BotCommand>();
 
 async function loadCommands(): Promise<void> {
-  const commands: any[] = [];
+  const commands: unknown[] = [];
   const commandsPath = join(__dirname, 'commands');
 
   try {
-    const commandFiles = readdirSync(commandsPath).filter(file => 
-      file.endsWith('.ts') || file.endsWith('.js')
+    const commandFiles = readdirSync(commandsPath).filter(
+      (file: string) => file.endsWith('.ts') || file.endsWith('.js')
     );
 
     for (const file of commandFiles) {
       const filePath = join(commandsPath, file);
-      
+
       try {
-        // Dynamic import for ES modules compatibility
         const commandModule = await import(filePath);
         const command = commandModule.default || commandModule;
 
         if ('data' in command && 'execute' in command) {
           client.commands.set(command.data.name, command as BotCommand);
           commands.push(command.data.toJSON());
-          console.log(`✅ Loaded command: ${command.data.name}`);
+          Logger.info('Command loaded', { command: command.data.name });
         } else {
-          console.log(`⚠️ Command at ${filePath} is missing required "data" or "execute" property.`);
+          Logger.warn('Invalid command structure', {
+            file: filePath,
+            reason: 'Missing "data" or "execute" property',
+          });
         }
       } catch (error) {
-        console.error(`❌ Error loading command ${file}:`, error);
+        await ErrorHandler.handle(
+          new BotError(
+            `Failed to load command: ${file}`,
+            ErrorCode.INTERNAL_ERROR,
+            { file },
+            error instanceof Error ? error : undefined
+          )
+        );
       }
     }
-  } catch (error) {
-    console.log('Commands directory not found, creating...');
-    // In a real implementation, you might want to create the directory here
+  } catch {
+    Logger.warn('Commands directory not found', { path: commandsPath });
   }
 
-  // Deploy commands
   if (commands.length > 0) {
     await deployCommands(commands);
   }
@@ -59,50 +76,66 @@ async function loadEvents(): Promise<void> {
   const eventsPath = join(__dirname, 'events');
 
   try {
-    const eventFiles = readdirSync(eventsPath).filter(file => 
-      file.endsWith('.ts') || file.endsWith('.js')
+    const eventFiles = readdirSync(eventsPath).filter(
+      (file: string) => file.endsWith('.ts') || file.endsWith('.js')
     );
 
     for (const file of eventFiles) {
       const filePath = join(eventsPath, file);
-      
+
       try {
         const eventModule = await import(filePath);
         const event = eventModule.default || eventModule;
 
         if (event.once) {
-          client.once(event.name, (...args: any[]) => event.execute(...args));
+          client.once(event.name, (...args: unknown[]) => event.execute(...args));
         } else {
-          client.on(event.name, (...args: any[]) => event.execute(...args));
+          client.on(event.name, (...args: unknown[]) => event.execute(...args));
         }
-        console.log(`✅ Loaded event: ${event.name}`);
+        Logger.info('Event loaded', { event: event.name });
       } catch (error) {
-        console.error(`❌ Error loading event ${file}:`, error);
+        await ErrorHandler.handle(
+          new BotError(
+            `Failed to load event: ${file}`,
+            ErrorCode.INTERNAL_ERROR,
+            { file },
+            error instanceof Error ? error : undefined
+          )
+        );
       }
     }
-  } catch (error) {
-    console.log('Events directory not found, creating...');
+  } catch {
+    Logger.warn('Events directory not found', { path: eventsPath });
   }
 }
 
-async function deployCommands(commands: any[]): Promise<void> {
-  if (!process.env.DISCORD_TOKEN || !process.env.DISCORD_CLIENT_ID) {
-    throw new Error('Missing required environment variables: DISCORD_TOKEN or DISCORD_CLIENT_ID');
+async function deployCommands(commands: unknown[]): Promise<void> {
+  if (!process.env['DISCORD_TOKEN'] || !process.env['DISCORD_CLIENT_ID']) {
+    throw new ConfigurationError(
+      'Missing required environment variables: DISCORD_TOKEN or DISCORD_CLIENT_ID',
+      'DISCORD_TOKEN'
+    );
   }
 
-  const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+  const rest = new REST().setToken(process.env['DISCORD_TOKEN']);
 
   try {
-    console.log('🔄 Started refreshing application (/) commands.');
+    Logger.info('Refreshing application commands', { count: commands.length });
 
-    await rest.put(
-      Routes.applicationCommands(process.env.DISCORD_CLIENT_ID),
-      { body: commands }
-    );
+    await rest.put(Routes.applicationCommands(process.env['DISCORD_CLIENT_ID']), {
+      body: commands,
+    });
 
-    console.log('✅ Successfully reloaded application (/) commands.');
+    Logger.info('Application commands refreshed successfully', { count: commands.length });
   } catch (error) {
-    console.error('❌ Error deploying commands:', error);
+    throw new ExternalServiceError(
+      'Failed to deploy commands to Discord',
+      'Discord API',
+      undefined,
+      true,
+      {},
+      error instanceof Error ? error : undefined
+    );
   }
 }
 
@@ -112,55 +145,111 @@ client.on('interactionCreate', async interaction => {
   const command = client.commands.get(interaction.commandName);
 
   if (!command) {
-    console.error(`No command matching ${interaction.commandName} was found.`);
+    Logger.warn('Command not found', { commandName: interaction.commandName });
     return;
   }
 
   try {
     await command.execute(interaction);
   } catch (error) {
-    console.error(`Error executing ${interaction.commandName}:`, error);
+    const commandError =
+      error instanceof CommandError
+        ? error
+        : new CommandError(
+            error instanceof Error ? error.message : 'Unknown error',
+            interaction.commandName,
+            'An error occurred while executing this command.',
+            {
+              userId: interaction.user.id,
+              guildId: interaction.guildId ?? undefined,
+              channelId: interaction.channelId,
+            },
+            error instanceof Error ? error : undefined
+          );
 
-    const errorMessage = {
-      content: 'There was an error while executing this command!',
-      ephemeral: true,
-    };
-
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(errorMessage);
-    } else {
-      await interaction.reply(errorMessage);
-    }
+    await ErrorHandler.handleInteractionError(commandError, interaction);
   }
 });
 
-client.once('ready', async () => {
-  console.log(`🤖 Bot is ready! Logged in as ${client.user?.tag}`);
+client.once('ready', () => {
+  Logger.info('Bot is ready', {
+    tag: client.user?.tag,
+    guilds: client.guilds.cache.size,
+  });
 });
 
-// Global error handlers
-process.on('unhandledRejection', (error: Error) => {
-  console.error('Unhandled promise rejection:', error);
+// Global error handlers with proper error handling system integration
+process.on('unhandledRejection', (reason: unknown) => {
+  const error =
+    reason instanceof Error
+      ? reason
+      : new BotError(
+          String(reason),
+          ErrorCode.UNKNOWN_ERROR,
+          { type: 'unhandledRejection' },
+          undefined,
+          ErrorSeverity.HIGH
+        );
+
+  void ErrorHandler.handle(error, { type: 'unhandledRejection' });
 });
 
 process.on('uncaughtException', (error: Error) => {
-  console.error('Uncaught exception:', error);
+  const botError = new BotError(
+    error.message,
+    ErrorCode.UNKNOWN_ERROR,
+    { type: 'uncaughtException' },
+    error,
+    ErrorSeverity.CRITICAL
+  );
+
+  // Synchronous logging for uncaught exceptions
+  Logger.error('Uncaught exception - shutting down', {
+    error: botError.toJSON(),
+  });
+
   process.exit(1);
+});
+
+// Graceful shutdown handlers
+process.on('SIGINT', () => {
+  Logger.info('Received SIGINT, shutting down gracefully');
+  client.destroy();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  Logger.info('Received SIGTERM, shutting down gracefully');
+  client.destroy();
+  process.exit(0);
 });
 
 // Initialize the bot
 async function start(): Promise<void> {
   try {
+    Logger.info('Starting bot initialization');
+
     await loadEvents();
     await loadCommands();
-    
-    if (!process.env.DISCORD_TOKEN) {
-      throw new Error('DISCORD_TOKEN is required');
+
+    if (!process.env['DISCORD_TOKEN']) {
+      throw new ConfigurationError('DISCORD_TOKEN is required', 'DISCORD_TOKEN');
     }
-    
-    await client.login(process.env.DISCORD_TOKEN);
+
+    await client.login(process.env['DISCORD_TOKEN']);
   } catch (error) {
-    console.error('Failed to start bot:', error);
+    const botError =
+      error instanceof BotError
+        ? error
+        : new BotError(
+            'Failed to start bot',
+            ErrorCode.INTERNAL_ERROR,
+            {},
+            error instanceof Error ? error : undefined,
+            ErrorSeverity.CRITICAL
+          );
+
+    await ErrorHandler.handle(botError);
     process.exit(1);
   }
 }

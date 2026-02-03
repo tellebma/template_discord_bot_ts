@@ -20,7 +20,7 @@ export default createStandardCommand({
   ): Promise<void> => {
     if (!interaction.guild) {
       await interaction.reply({
-        content: '❌ This command can only be used in a server!',
+        content: 'This command can only be used in a server!',
         ephemeral: true,
       });
       return;
@@ -30,23 +30,23 @@ export default createStandardCommand({
     const owner: GuildMember = await guild.fetchOwner();
 
     const embed = new EmbedBuilder()
-      .setTitle(\`Server Information - \${guild.name}\`)
+      .setTitle(`Server Information - ${guild.name}`)
       .setThumbnail(guild.iconURL({ size: 256 }))
       .setColor('#0099ff')
       .addFields(
-        { name: '👑 Owner', value: owner.user.tag, inline: true },
-        { name: '🆔 Server ID', value: guild.id, inline: true },
+        { name: 'Owner', value: owner.user.tag, inline: true },
+        { name: 'Server ID', value: guild.id, inline: true },
         {
-          name: '📅 Created',
-          value: \`<t:\${Math.floor(guild.createdTimestamp / 1000)}:F>\`,
+          name: 'Created',
+          value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>`,
           inline: false,
         },
-        { name: '👥 Members', value: \`\${guild.memberCount}\`, inline: true },
-        { name: '📋 Channels', value: \`\${guild.channels.cache.size}\`, inline: true },
-        { name: '🎭 Roles', value: \`\${guild.roles.cache.size}\`, inline: true },
-        { name: '😀 Emojis', value: \`\${guild.emojis.cache.size}\`, inline: true },
-        { name: '🔒 Verification Level', value: guild.verificationLevel.toString(), inline: true },
-        { name: '🛡️ Boost Level', value: \`Level \${guild.premiumTier}\`, inline: true }
+        { name: 'Members', value: `${guild.memberCount}`, inline: true },
+        { name: 'Channels', value: `${guild.channels.cache.size}`, inline: true },
+        { name: 'Roles', value: `${guild.roles.cache.size}`, inline: true },
+        { name: 'Emojis', value: `${guild.emojis.cache.size}`, inline: true },
+        { name: 'Verification Level', value: guild.verificationLevel.toString(), inline: true },
+        { name: 'Boost Level', value: `Level ${guild.premiumTier}`, inline: true }
       );
 
     if (guild.description) {
