@@ -1,3 +1,11 @@
+## [1.1.1](https://github.com/tellebma/template_discord_bot_ts/compare/v1.1.0...v1.1.1) (2026-05-27)
+
+
+### Code Refactoring
+
+* replace deprecated ephemeral:true with flags: MessageFlags.Ephemeral ([3fd9a52](https://github.com/tellebma/template_discord_bot_ts/commit/3fd9a52533e6ee0ac6a87a8015f7e546efab1c4b))
+* replace dynamic ephemeral reply option and generated code with MessageFlags ([a111911](https://github.com/tellebma/template_discord_bot_ts/commit/a111911b196e26e4ddf10cc0c3c5e049c5be04d2))
+
 ## [1.1.0](https://github.com/tellebma/template_discord_bot_ts/compare/v1.0.0...v1.1.0) (2026-05-27)
 
 
