@@ -3,7 +3,7 @@ import { CronJob } from 'cron';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { config as dotenvConfig } from 'dotenv';
-import type { BotCommand, ExtendedClient } from '@/types/bot';
+import type { BotCommand, BotComponent, ExtendedClient } from '@/types/bot';
 import {
   Logger,
   ErrorHandler,
@@ -26,6 +26,7 @@ const client = new Client({
 }) as ExtendedClient;
 
 client.commands = new Collection<string, BotCommand>();
+client.components = new Collection<string, BotComponent>();
 
 async function loadCommands(): Promise<void> {
   const commands: unknown[] = [];
@@ -225,6 +226,46 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
+async function loadComponents(): Promise<void> {
+  const buttonsPath = join(__dirname, 'interactions', 'buttons');
+
+  try {
+    const componentFiles = readdirSync(buttonsPath).filter(
+      (file: string) => file.endsWith('.ts') || file.endsWith('.js')
+    );
+
+    for (const file of componentFiles) {
+      const filePath = join(buttonsPath, file);
+
+      try {
+        const componentModule = await import(filePath);
+        const component = componentModule.default || componentModule;
+
+        if ('prefix' in component && 'execute' in component) {
+          client.components.set(component.prefix, component as BotComponent);
+          Logger.info('Component loaded', { prefix: component.prefix });
+        } else {
+          Logger.warn('Invalid component structure', {
+            file: filePath,
+            reason: 'Missing "prefix" or "execute" property',
+          });
+        }
+      } catch (error) {
+        await ErrorHandler.handle(
+          new BotError(
+            `Failed to load component: ${file}`,
+            ErrorCode.INTERNAL_ERROR,
+            { file },
+            error instanceof Error ? error : undefined
+          )
+        );
+      }
+    }
+  } catch {
+    Logger.warn('Interactions/buttons directory not found', { path: buttonsPath });
+  }
+}
+
 async function loadCrons(): Promise<void> {
   const cronsPath = join(__dirname, 'crons');
 
@@ -273,6 +314,7 @@ async function start(): Promise<void> {
 
     await loadEvents();
     await loadCommands();
+    await loadComponents();
 
     if (!process.env['DISCORD_TOKEN']) {
       throw new ConfigurationError('DISCORD_TOKEN is required', 'DISCORD_TOKEN');
