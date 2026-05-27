@@ -1,31 +1,21 @@
-FROM node:18-alpine
-
-WORKDIR /app
-
-# Copy package files
+# ---- Build stage ----
+FROM node:20-alpine AS builder
+WORKDIR /usr/src/app
 COPY package*.json ./
+RUN npm ci
 COPY tsconfig.json ./
-
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy source code
 COPY src/ ./src/
-
-# Build TypeScript
 RUN npm run build
+RUN npm prune --omit=dev
 
-# Remove source files after build
-RUN rm -rf src/ tsconfig.json
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S botuser -u 1001
-
-# Change ownership of app directory
-RUN chown -R botuser:nodejs /app
+# ---- Production stage ----
+FROM node:20-alpine
+WORKDIR /usr/src/app
+ENV NODE_ENV=production
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY package.json ./
+# Utilisateur non-root
+RUN addgroup -S botgroup && adduser -S botuser -G botgroup
 USER botuser
-
-EXPOSE 3000
-
-CMD ["npm", "start"]
+CMD ["node", "dist/app.js"]
