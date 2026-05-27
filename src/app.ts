@@ -8,11 +8,12 @@ import {
   Logger,
   ErrorHandler,
   BotError,
-  CommandError,
   ConfigurationError,
   ExternalServiceError,
   ErrorCode,
   ErrorSeverity,
+  initSentry,
+  flushSentry,
 } from '@/utils';
 
 dotenvConfig();
@@ -27,6 +28,9 @@ const client = new Client({
 
 client.commands = new Collection<string, BotCommand>();
 client.components = new Collection<string, BotComponent>();
+
+/** Registre des crons actifs, pour les arrêter proprement au shutdown. */
+const activeCrons: CronJob[] = [];
 
 async function loadCommands(): Promise<void> {
   const commands: unknown[] = [];
@@ -141,45 +145,6 @@ async function deployCommands(commands: unknown[]): Promise<void> {
   }
 }
 
-client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-
-  const command = client.commands.get(interaction.commandName);
-
-  if (!command) {
-    Logger.warn('Command not found', { commandName: interaction.commandName });
-    return;
-  }
-
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    const commandError =
-      error instanceof CommandError
-        ? error
-        : new CommandError(
-            error instanceof Error ? error.message : 'Unknown error',
-            interaction.commandName,
-            'An error occurred while executing this command.',
-            {
-              userId: interaction.user.id,
-              guildId: interaction.guildId ?? undefined,
-              channelId: interaction.channelId,
-            },
-            error instanceof Error ? error : undefined
-          );
-
-    await ErrorHandler.handleInteractionError(commandError, interaction);
-  }
-});
-
-client.once('ready', () => {
-  Logger.info('Bot is ready', {
-    tag: client.user?.tag,
-    guilds: client.guilds.cache.size,
-  });
-});
-
 // Global error handlers with proper error handling system integration
 process.on('unhandledRejection', (reason: unknown) => {
   const error =
@@ -213,29 +178,52 @@ process.on('uncaughtException', (error: Error) => {
   process.exit(1);
 });
 
-// Graceful shutdown handlers
-process.on('SIGINT', () => {
-  Logger.info('Received SIGINT, shutting down gracefully');
-  client.destroy();
-  process.exit(0);
-});
+// Graceful shutdown
+const SHUTDOWN_TIMEOUT_MS = 10_000;
+let shuttingDown = false;
 
-process.on('SIGTERM', () => {
-  Logger.info('Received SIGTERM, shutting down gracefully');
-  client.destroy();
+async function shutdown(signal: string): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  Logger.info('Shutting down gracefully', { signal });
+
+  const hardExit = setTimeout(() => {
+    Logger.error('Shutdown timed out, forcing exit');
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+  hardExit.unref();
+
+  for (const job of activeCrons) {
+    job.stop();
+  }
+
+  await flushSentry();
+  await client.destroy();
   process.exit(0);
-});
+}
+
+process.on('SIGINT', () => void shutdown('SIGINT'));
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
 
 async function loadComponents(): Promise<void> {
-  const buttonsPath = join(__dirname, 'interactions', 'buttons');
+  const baseDir = join(__dirname, 'interactions');
+  const subDirs = ['buttons', 'modals', 'selectMenus'];
 
-  try {
-    const componentFiles = readdirSync(buttonsPath).filter(
-      (file: string) => file.endsWith('.ts') || file.endsWith('.js')
-    );
+  for (const sub of subDirs) {
+    const dir = join(baseDir, sub);
+    let componentFiles: string[];
+
+    try {
+      componentFiles = readdirSync(dir).filter(
+        (file: string) => file.endsWith('.ts') || file.endsWith('.js')
+      );
+    } catch {
+      // Dossier optionnel : on passe au suivant s'il n'existe pas.
+      continue;
+    }
 
     for (const file of componentFiles) {
-      const filePath = join(buttonsPath, file);
+      const filePath = join(dir, file);
 
       try {
         const componentModule = await import(filePath);
@@ -261,8 +249,6 @@ async function loadComponents(): Promise<void> {
         );
       }
     }
-  } catch {
-    Logger.warn('Interactions/buttons directory not found', { path: buttonsPath });
   }
 }
 
@@ -284,6 +270,7 @@ async function loadCrons(): Promise<void> {
         if ('name' in cron && 'schedule' in cron && 'execute' in cron) {
           const job: CronJob = cron.execute(client);
           job.start();
+          activeCrons.push(job);
           Logger.info('Cron loaded', { cron: cron.name, schedule: cron.schedule });
         } else {
           Logger.warn('Invalid cron structure', {
@@ -310,6 +297,7 @@ async function loadCrons(): Promise<void> {
 // Initialize the bot
 async function start(): Promise<void> {
   try {
+    initSentry();
     Logger.info('Starting bot initialization');
 
     await loadEvents();
