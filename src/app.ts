@@ -14,6 +14,7 @@ import {
   ErrorSeverity,
   initSentry,
   flushSentry,
+  captureError,
 } from '@/utils';
 
 dotenvConfig();
@@ -298,6 +299,8 @@ async function loadCrons(): Promise<void> {
 async function start(): Promise<void> {
   try {
     initSentry();
+    // Remonte chaque erreur gérée vers Sentry (no-op si SENTRY_DSN absent).
+    ErrorHandler.registerHandler(error => captureError(error));
     Logger.info('Starting bot initialization');
 
     await loadEvents();

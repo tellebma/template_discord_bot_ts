@@ -180,6 +180,18 @@ describe('ErrorHandler', () => {
         })
       );
     });
+
+    it('should sanitize credentials in the logged output', async () => {
+      const error = new BotError(
+        'DB failed: postgres://user:s3cret@host:5432/db',
+        ErrorCode.UNKNOWN_ERROR
+      );
+      await ErrorHandler.handle(error);
+
+      const logged = loggerSpy.mock.calls.map(call => String(call[0])).join('\n');
+      expect(logged).not.toContain('s3cret');
+      expect(logged).toContain('[REDACTED]');
+    });
   });
 
   describe('handleInteractionError', () => {

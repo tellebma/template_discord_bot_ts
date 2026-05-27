@@ -1,4 +1,5 @@
 import { Logger } from './logger';
+import { sanitizeMessage } from './sanitize';
 import type { RepliableInteraction } from 'discord.js';
 
 /**
@@ -466,26 +467,28 @@ export class ErrorHandler {
    * Log an error appropriately based on severity
    */
   private static logError(error: BotError): void {
+    // Masque les credentials (tokens, URLs de connexion) avant l'écriture des logs.
+    const message = sanitizeMessage(error.message);
     const logContext = {
       code: error.code,
       severity: error.severity,
       ...error.context,
-      stack: error.stack,
+      stack: error.stack ? sanitizeMessage(error.stack) : error.stack,
     };
 
     switch (error.severity) {
       case ErrorSeverity.LOW:
-        Logger.warn(error.message, logContext);
+        Logger.warn(message, logContext);
         break;
       case ErrorSeverity.MEDIUM:
-        Logger.error(error.message, logContext);
+        Logger.error(message, logContext);
         break;
       case ErrorSeverity.HIGH:
       case ErrorSeverity.CRITICAL:
-        Logger.error(`[${error.severity.toUpperCase()}] ${error.message}`, logContext);
+        Logger.error(`[${error.severity.toUpperCase()}] ${message}`, logContext);
         break;
       default:
-        Logger.error(error.message, logContext);
+        Logger.error(message, logContext);
     }
   }
 
