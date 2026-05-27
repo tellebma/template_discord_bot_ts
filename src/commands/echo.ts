@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { createStandardCommand } from '@/utils/commandTemplate';
 import type { ChatInputCommandInteraction } from 'discord.js';
 
@@ -58,7 +58,7 @@ export default createStandardCommand({
 
     await interaction.reply({
       content: `${filteredMessage}`,
-      ephemeral: ephemeral,
+      ...(ephemeral ? { flags: MessageFlags.Ephemeral } : {}),
       allowedMentions: { parse: [] }, // Prevent all mentions for safety
     });
   },

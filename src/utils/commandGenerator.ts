@@ -75,7 +75,6 @@ export default createStandardCommand({
     // TODO: Implement command logic here
     await interaction.reply({
       content: \`Hello! This is the ${name} command.\`,
-      ephemeral: false,
     });
   },
 });`;
@@ -97,7 +96,6 @@ export default {
     // TODO: Implement command logic here
     await interaction.reply({
       content: \`Hello! This is the ${name} command.\`,
-      ephemeral: false,
     });
   },
 };`;

@@ -2,7 +2,7 @@
  * Example command using the new defineCommand approach
  * Compare this with echo.ts to see the simplification
  */
-import { SlashCommandBuilder } from 'discord.js';
+import { SlashCommandBuilder, MessageFlags } from 'discord.js';
 import { defineCommand } from '@/utils/defineCommand';
 
 export default defineCommand({
@@ -27,7 +27,7 @@ export default defineCommand({
 
     await ctx.reply({
       content: `${message}, ${user}!`,
-      ephemeral,
+      ...(ephemeral ? { flags: MessageFlags.Ephemeral } : {}),
     });
   },
 });
