@@ -86,7 +86,7 @@ There is also a `createStandardCommand` template pattern in `src/utils/commandTe
 
 Configured in both `tsconfig.json` and `vitest.config.ts`:
 - `@/*` → `src/*`
-- `@/commands/*`, `@/events/*`, `@/utils/*`, `@/types/*`, `@/fonctions/*`
+- `@/commands/*`, `@/events/*`, `@/utils/*`, `@/types/*`, `@/fonctions/*`, `@/crons/*`, `@/database/*`, `@/interactions/*`
 
 ## TypeScript
 
