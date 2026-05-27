@@ -3,6 +3,7 @@ import {
   ChatInputCommandInteraction,
   ActionRowBuilder,
   StringSelectMenuBuilder,
+  MessageFlags,
 } from 'discord.js';
 import type { BotCommand } from '@/types/bot';
 
@@ -26,7 +27,7 @@ const command: BotCommand = {
     await interaction.reply({
       content: 'Sélectionnez une option :',
       components: [row],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

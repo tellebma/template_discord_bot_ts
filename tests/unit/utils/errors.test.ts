@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { MessageFlags } from 'discord.js';
 import {
   BotError,
   CommandError,
@@ -203,7 +204,7 @@ describe('ErrorHandler', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith(
         expect.objectContaining({
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         })
       );
     });

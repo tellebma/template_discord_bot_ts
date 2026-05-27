@@ -1,4 +1,4 @@
-import { MessageComponentInteraction, ModalSubmitInteraction } from 'discord.js';
+import { MessageComponentInteraction, ModalSubmitInteraction, MessageFlags } from 'discord.js';
 import type { BotComponent } from '@/types/bot';
 import { successEmbed } from '@/utils';
 import { feedbackRepository, type Feedback } from '@/commands/feedback';
@@ -21,7 +21,7 @@ const component: BotComponent = {
 
     await interaction.reply({
       embeds: [successEmbed('Merci !', 'Votre retour a bien été enregistré.')],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

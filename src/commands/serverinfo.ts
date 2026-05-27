@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, MessageFlags } from 'discord.js';
 import { createStandardCommand } from '@/utils/commandTemplate';
 import type { ChatInputCommandInteraction, Guild, GuildMember } from 'discord.js';
 
@@ -21,7 +21,7 @@ export default createStandardCommand({
     if (!interaction.guild) {
       await interaction.reply({
         content: 'This command can only be used in a server!',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }

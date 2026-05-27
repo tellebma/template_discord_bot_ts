@@ -1,6 +1,7 @@
 import { Logger } from './logger';
 import { sanitizeMessage } from './sanitize';
-import type { RepliableInteraction } from 'discord.js';
+import { MessageFlags } from 'discord.js';
+import type { InteractionReplyOptions, RepliableInteraction } from 'discord.js';
 
 /**
  * Error codes for categorizing different types of errors
@@ -395,9 +396,9 @@ export class ErrorHandler {
     const userMessage = botError.getUserMessage();
 
     try {
-      const replyOptions = {
+      const replyOptions: InteractionReplyOptions = {
         content: `${userMessage}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       };
 
       if (interaction.replied || interaction.deferred) {

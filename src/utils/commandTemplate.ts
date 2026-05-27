@@ -7,7 +7,8 @@ import type {
   AnySlashCommandBuilder,
 } from '@/types/bot';
 import { Logger } from '@/utils/logger';
-import type { ChatInputCommandInteraction, PermissionResolvable } from 'discord.js';
+import { MessageFlags } from 'discord.js';
+import type { ChatInputCommandInteraction, InteractionReplyOptions, PermissionResolvable } from 'discord.js';
 
 export const ParameterValidators: Record<string, ParameterValidator> = {
   string: (value: unknown, options: unknown = {}): boolean => {
@@ -91,7 +92,7 @@ export class CommandTemplate {
       if (!this.validatePermissions(interaction)) {
         await interaction.reply({
           content: 'You do not have permission to use this command.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -99,7 +100,7 @@ export class CommandTemplate {
       if (!this.checkCooldown(interaction)) {
         await interaction.reply({
           content: 'Please wait before using this command again.',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -108,7 +109,7 @@ export class CommandTemplate {
       if (!validatedParams.valid) {
         await interaction.reply({
           content: `Invalid parameters: ${validatedParams.error ?? 'Unknown error'}`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -134,9 +135,9 @@ export class CommandTemplate {
         success: false,
       } as LogContext);
 
-      const replyMessage = {
+      const replyMessage: InteractionReplyOptions = {
         content: 'An error occurred while executing this command.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       };
 
       if (interaction.replied || interaction.deferred) {

@@ -1,4 +1,4 @@
-import { MessageComponentInteraction, ModalSubmitInteraction } from 'discord.js';
+import { MessageComponentInteraction, ModalSubmitInteraction, MessageFlags } from 'discord.js';
 import type { BotComponent } from '@/types/bot';
 import { componentPayload } from '@/interactions';
 import { pollRepository, buildPollEmbed } from '@/commands/poll';
@@ -19,7 +19,7 @@ const component: BotComponent = {
 
     const poll = await pollRepository.get(pollId);
     if (!poll) {
-      await interaction.reply({ content: 'Ce sondage a expiré.', ephemeral: true });
+      await interaction.reply({ content: 'Ce sondage a expiré.', flags: MessageFlags.Ephemeral });
       return;
     }
 

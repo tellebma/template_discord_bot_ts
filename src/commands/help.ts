@@ -2,6 +2,7 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   AutocompleteInteraction,
+  MessageFlags,
 } from 'discord.js';
 import type { ExtendedClient, BotCommand } from '@/types/bot';
 import { infoEmbed } from '@/utils';
@@ -39,7 +40,7 @@ const command: BotCommand = {
       if (!cmd) {
         await interaction.reply({
           content: `Commande inconnue : \`${target}\``,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
@@ -48,7 +49,7 @@ const command: BotCommand = {
         value: cmd.autocomplete ? 'Oui' : 'Non',
         inline: true,
       });
-      await interaction.reply({ embeds: [embed], ephemeral: true });
+      await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -56,7 +57,7 @@ const command: BotCommand = {
       .map(cmd => `**/${cmd.data.name}** — ${cmd.data.description}`)
       .join('\n');
     const embed = infoEmbed('📖 Commandes disponibles', list || 'Aucune commande.');
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   },
 };
 
