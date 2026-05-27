@@ -45,6 +45,9 @@ export default defineConfig({
       '@/utils': resolve(__dirname, './src/utils'),
       '@/types': resolve(__dirname, './src/types'),
       '@/fonctions': resolve(__dirname, './src/fonctions'),
+      '@/crons': resolve(__dirname, './src/crons'),
+      '@/database': resolve(__dirname, './src/database'),
+      '@/interactions': resolve(__dirname, './src/interactions'),
     },
   },
 });

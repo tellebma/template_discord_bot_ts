@@ -34,7 +34,10 @@
       "@/events/*": ["./events/*"],
       "@/utils/*": ["./utils/*"],
       "@/types/*": ["./types/*"],
-      "@/fonctions/*": ["./fonctions/*"]
+      "@/fonctions/*": ["./fonctions/*"],
+      "@/crons/*": ["./crons/*"],
+      "@/database/*": ["./database/*"],
+      "@/interactions/*": ["./interactions/*"]
     }
   },
   "include": [
