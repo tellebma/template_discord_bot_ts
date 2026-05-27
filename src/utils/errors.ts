@@ -1,5 +1,5 @@
 import { Logger } from './logger';
-import type { ChatInputCommandInteraction } from 'discord.js';
+import type { RepliableInteraction } from 'discord.js';
 
 /**
  * Error codes for categorizing different types of errors
@@ -375,14 +375,19 @@ export class ErrorHandler {
    */
   static async handleInteractionError(
     error: Error | BotError,
-    interaction: ChatInputCommandInteraction
+    interaction: RepliableInteraction
   ): Promise<void> {
-    const botError = this.normalizeError(error, {
+    const baseContext = {
       userId: interaction.user.id,
       guildId: interaction.guildId ?? undefined,
-      channelId: interaction.channelId,
-      commandName: interaction.commandName,
-    });
+      channelId: interaction.channelId ?? undefined,
+    };
+    const botError = this.normalizeError(
+      error,
+      'commandName' in interaction
+        ? { ...baseContext, commandName: interaction.commandName as string }
+        : baseContext
+    );
 
     await this.handle(botError);
 
@@ -505,7 +510,7 @@ export function errorMiddleware<T extends (...args: unknown[]) => Promise<unknow
     try {
       await fn(...args);
     } catch (error) {
-      const interaction = args[0] as ChatInputCommandInteraction;
+      const interaction = args[0] as RepliableInteraction;
       if (
         interaction &&
         typeof interaction === 'object' &&

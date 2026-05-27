@@ -1,4 +1,4 @@
-import { Interaction, ChatInputCommandInteraction } from 'discord.js';
+import { Interaction } from 'discord.js';
 import type { ExtendedClient } from '@/types/bot';
 import { Logger, ErrorHandler } from '@/utils';
 import { resolveComponent } from '@/interactions';
@@ -55,35 +55,10 @@ export default {
       }
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-
-      // handleInteractionError only accepts ChatInputCommandInteraction; use it
-      // for slash commands and fall back to handle() + manual reply for others.
-      if (interaction.isChatInputCommand()) {
-        await ErrorHandler.handleInteractionError(
-          err,
-          interaction as ChatInputCommandInteraction
-        );
+      if (interaction.isRepliable()) {
+        await ErrorHandler.handleInteractionError(err, interaction);
       } else {
         await ErrorHandler.handle(err);
-        if (interaction.isRepliable()) {
-          try {
-            const replyOptions = {
-              content: 'An error occurred while processing your request.',
-              ephemeral: true,
-            };
-            if (interaction.replied || interaction.deferred) {
-              await interaction.followUp(replyOptions);
-            } else {
-              await interaction.reply(replyOptions);
-            }
-          } catch (replyError) {
-            Logger.error('Failed to send error response to user', {
-              originalError: err.message,
-              replyError:
-                replyError instanceof Error ? replyError.message : String(replyError),
-            });
-          }
-        }
       }
     }
   },
