@@ -9,9 +9,8 @@ describe('sanitizeMessage', () => {
   });
 
   it('masque un token Discord (Bot ...)', () => {
-    const out = sanitizeMessage('Authorization: Bot MTEx.abc.def-ghi');
-    expect(out).not.toContain('MTEx.abc.def-ghi');
-    expect(out).toContain('[REDACTED]');
+    const out = sanitizeMessage('Authorization: Bot MTExMjM0NTY3ODkwMTIz.Gc5678.abc-defghijklmno');
+    expect(out).toBe('Authorization: [REDACTED]');
   });
 
   it('laisse un message neutre intact', () => {
@@ -24,5 +23,6 @@ describe('sanitizeError', () => {
     const err = new Error('fail postgres://user:pass@host:5432/db');
     const cleaned = sanitizeError(err);
     expect(cleaned.message).not.toContain('pass');
+    expect(cleaned.stack ?? '').not.toContain('pass');
   });
 });

@@ -1,4 +1,5 @@
 import { Client, GatewayIntentBits, Collection, REST, Routes } from 'discord.js';
+import { CronJob } from 'cron';
 import { readdirSync } from 'fs';
 import { join } from 'path';
 import { config as dotenvConfig } from 'dotenv';
@@ -224,6 +225,47 @@ process.on('SIGTERM', () => {
   process.exit(0);
 });
 
+async function loadCrons(): Promise<void> {
+  const cronsPath = join(__dirname, 'crons');
+
+  try {
+    const cronFiles = readdirSync(cronsPath).filter(
+      (file: string) => file.endsWith('.ts') || file.endsWith('.js')
+    );
+
+    for (const file of cronFiles) {
+      const filePath = join(cronsPath, file);
+
+      try {
+        const cronModule = await import(filePath);
+        const cron = cronModule.default || cronModule;
+
+        if ('name' in cron && 'schedule' in cron && 'execute' in cron) {
+          const job: CronJob = cron.execute(client);
+          job.start();
+          Logger.info('Cron loaded', { cron: cron.name, schedule: cron.schedule });
+        } else {
+          Logger.warn('Invalid cron structure', {
+            file: filePath,
+            reason: 'Missing "name", "schedule", or "execute" property',
+          });
+        }
+      } catch (error) {
+        await ErrorHandler.handle(
+          new BotError(
+            `Failed to load cron: ${file}`,
+            ErrorCode.INTERNAL_ERROR,
+            { file },
+            error instanceof Error ? error : undefined
+          )
+        );
+      }
+    }
+  } catch {
+    Logger.warn('Crons directory not found', { path: cronsPath });
+  }
+}
+
 // Initialize the bot
 async function start(): Promise<void> {
   try {
@@ -237,6 +279,7 @@ async function start(): Promise<void> {
     }
 
     await client.login(process.env['DISCORD_TOKEN']);
+    await loadCrons();
   } catch (error) {
     const botError =
       error instanceof BotError
