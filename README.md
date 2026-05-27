@@ -339,3 +339,21 @@ NODE_ENV=production npm start
 ## License
 
 MIT
+
+## Fonctionnalités démo
+
+| Commande    | Démontre                              |
+| ----------- | ------------------------------------- |
+| `/help`     | Autocomplete dynamique + embed        |
+| `/poll`     | Boutons + compteur live + persistance |
+| `/feedback` | Modal (formulaire) + persistance      |
+| `/menu`     | Select menu                           |
+
+## Docker
+
+```bash
+docker build -t discord-bot-template .
+docker compose up -d
+```
+
+Variables d'environnement : voir `.env.example` (+ `SENTRY_DSN` optionnel pour Sentry).
