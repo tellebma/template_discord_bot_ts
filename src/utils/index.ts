@@ -31,3 +31,6 @@ export {
   type ErrorHandlerFn,
   type ErrorHandleResult,
 } from './errors';
+export { successEmbed, errorEmbed, infoEmbed } from './embeds';
+export { sanitizeMessage, sanitizeError } from './sanitize';
+export { initSentry, captureError, flushSentry } from './sentry';
